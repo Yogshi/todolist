@@ -3,21 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>To-Do List</title>
+  <title>Aesthetic To-Do List</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Jersey+20&family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
-<body>
-  <div class="container">
-    <h1>To-Do List</h1>
-    <div class="input-group">
-      <input type="text" id="todoInput" placeholder="Add a new task...">
-      <button id="addBtn">Add</button>
+<body class="landing-page">
+  <div class="pixel-scene">
+    <div class="sun"></div>
+    <div class="mountains">
+      <div class="mountain mountain-1"></div>
+      <div class="mountain mountain-2"></div>
+      <div class="mountain mountain-3"></div>
     </div>
-    <ul id="todoList"></ul>
-    <p id="emptyMessage">No tasks yet. Add some tasks to get started!</p>
+    <div class="trees">
+      <div class="tree tree-1"></div>
+      <div class="tree tree-2"></div>
+      <div class="tree tree-3"></div>
+      <div class="tree tree-4"></div>
+      <div class="tree tree-5"></div>
+    </div>
+    <div class="ground"></div>
+    <div class="birds">
+      <div class="bird bird-1"></div>
+      <div class="bird bird-2"></div>
+    </div>
+    <div class="clouds">
+      <div class="cloud cloud-1"></div>
+      <div class="cloud cloud-2"></div>
+    </div>
   </div>
-  <canvas id="confetti"></canvas>
+  
+  <div class="landing-content">
+    <h1 class="title">Aesthetic To-Do List</h1>
+    <button class="get-started-btn" onclick="window.location.href='todo.html'">Get Started</button>
+  </div>
+  
   <script src="script.js"></script>
 </body>
 </html>
