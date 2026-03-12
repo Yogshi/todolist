@@ -7,66 +7,6 @@ const ctx = confettiCanvas.getContext('2d');
 
 let todos = [];
 let confettiActive = false;
-let audioContext = null;
-
-function initAudio() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
-}
-
-function playTypingSound() {
-  initAudio();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  
-  oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-  oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.05);
-  
-  gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-  
-  oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.05);
-}
-
-function playTwinkleSound() {
-  initAudio();
-  const frequencies = [523.25, 659.25, 783.99, 1046.50];
-  
-  frequencies.forEach((freq, i) => {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + i * 0.1);
-    oscillator.type = 'sine';
-    
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime + i * 0.1);
-    gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + i * 0.1 + 0.05);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.1 + 0.3);
-    
-    oscillator.start(audioContext.currentTime + i * 0.1);
-    oscillator.stop(audioContext.currentTime + i * 0.1 + 0.3);
-  });
-}
-
-function createStarTwinkle(x, y) {
-  const star = document.createElement('div');
-  star.className = 'star-tween';
-  star.innerHTML = '✨';
-  star.style.left = x + 'px';
-  star.style.top = y + 'px';
-  star.style.fontSize = '24px';
-  document.body.appendChild(star);
-  
-  setTimeout(() => star.remove(), 800);
-}
 
 function updateEmptyMessage() {
   emptyMessage.classList.toggle('hidden', todos.length > 0);
@@ -171,10 +111,6 @@ function addTodo() {
     todos.push({ text, completed: false });
     todoInput.value = '';
     renderTodos();
-    playTwinkleSound();
-    
-    const rect = addBtn.getBoundingClientRect();
-    createStarTwinkle(rect.left + rect.width / 2, rect.top);
   }
 }
 
@@ -193,15 +129,6 @@ addBtn.addEventListener('click', addTodo);
 todoInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     addTodo();
-  }
-});
-
-let lastTypingTime = 0;
-todoInput.addEventListener('input', (e) => {
-  const now = Date.now();
-  if (now - lastTypingTime > 150) {
-    playTypingSound();
-    lastTypingTime = now;
   }
 });
 
