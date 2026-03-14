@@ -3,28 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aesthetic To-Do List</title>
+  <title>To-do List</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Jersey+20&family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body class="todo-page">
-  <div class="pixel-sky">
-    <div class="stars"></div>
-    <div class="clouds-sky">
-      <div class="cloud-s cloud-s1"></div>
-      <div class="cloud-s cloud-s2"></div>
+  <div class="todo-bg">
+    <img src="inspo.jpg" alt="Background" class="bg-image">
+  </div>
+  
+  <div class="date-display" id="dateDisplay"></div>
+  
+  <div class="tabs-container">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-category="all" onclick="playClickSound(); switchTab('all')">
+        <span class="tab-symbol">📋</span>
+        <span class="tab-name">All</span>
+      </button>
     </div>
-    <div class="sun-sky"></div>
-    <div class="mountains-sky"></div>
-    <div class="trees-sky"></div>
-    <div class="ground-sky"></div>
   </div>
   
   <div class="todo-container">
-    <h1 class="create-title">Create a To-Do List</h1>
-    <button class="add-task-btn" onclick="openPopup()">+ Add Task</button>
+    <button class="add-task-btn" onclick="playClickSound(); openPopup()">+ Add Task</button>
     
-    <div class="folders-container" id="foldersContainer">
+    <div class="tasks-container" id="tasksContainer">
       <p class="no-tasks-message" id="noTasksMessage">No tasks yet. Add your first task!</p>
     </div>
   </div>
@@ -33,7 +35,7 @@
     <div class="popup-box">
       <div class="popup-header">
         <h2>New Task</h2>
-        <button class="close-popup" onclick="closePopup()">✕</button>
+        <button class="close-popup" onclick="playClickSound(); closePopup()">✕</button>
       </div>
       
       <div class="form-group">
@@ -63,14 +65,8 @@
         </div>
       </div>
       
-      <button class="save-task-btn" onclick="saveTask()">Save Task</button>
+      <button class="save-task-btn" onclick="playClickSound(); saveTask()">Save Task</button>
     </div>
-  </div>
-  
-  <div class="category-view" id="categoryView">
-    <button class="back-btn" onclick="closeCategoryView()">← Back</button>
-    <h2 class="category-title" id="categoryTitle">Category</h2>
-    <div class="category-tasks" id="categoryTasks"></div>
   </div>
   
   <div class="message-overlay" id="messageOverlay">
@@ -80,7 +76,7 @@
   <div class="win-overlay" id="winOverlay">
     <div class="win-content">
       <h2 class="win-title">🎉 Well Done! 🎉</h2>
-      <p class="win-message">You have finished all your work on time!<br>Have a great day! You deserve it! ✨</p>
+      <p class="win-message">Have a great day!<br>You deserve it! ✨</p>
     </div>
   </div>
   

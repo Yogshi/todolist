@@ -1,25 +1,28 @@
 let tasks = [];
-let currentCategory = null;
+let currentTab = 'all';
 let timerIntervals = [];
 let confettiActive = false;
 let effectsActive = false;
 
-const categoryDoodles = {
+const categorySymbols = {
   school: '📚',
   work: '💼',
-  personal: '⭐',
+  shopping: '🛒',
   health: '💪',
-  shopping: '🛒'
+  personal: '🌟',
+  general: '✅'
 };
 
-const defaultDoodle = '📁';
+const defaultSymbol = '✅';
 
 const encouragementMessages = [
   'Good Job! 🌟',
   'Keep It Up! ✨',
   'Well Done! 🎉',
   'Amazing! 💫',
-  'You Got This! 🚀'
+  'You Got This! 🚀',
+  'Fantastic! ⭐',
+  'Great Work! 🌈'
 ];
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -42,6 +45,48 @@ function playTypingSound() {
   
   oscillator.start(audioCtx.currentTime);
   oscillator.stop(audioCtx.currentTime + 0.05);
+}
+
+function playClickSound() {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+  
+  gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+  
+  oscillator.start(audioCtx.currentTime);
+  oscillator.stop(audioCtx.currentTime + 0.1);
+}
+
+function playPopupSound() {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+  oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.15);
+  
+  gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  
+  oscillator.start(audioCtx.currentTime);
+  oscillator.stop(audioCtx.currentTime + 0.15);
 }
 
 function playTwinkleSound() {
@@ -94,7 +139,6 @@ function playWinSound() {
   });
 }
 
-// Load tasks from localStorage
 function loadTasks() {
   const saved = localStorage.getItem('aestheticTasks');
   if (saved) {
@@ -102,144 +146,81 @@ function loadTasks() {
   }
 }
 
-// Save tasks to localStorage
 function saveTasks() {
   localStorage.setItem('aestheticTasks', JSON.stringify(tasks));
 }
 
-// Get unique categories
 function getCategories() {
-  const categories = {};
+  const categories = new Set();
   tasks.forEach(task => {
-    if (!categories[task.category]) {
-      categories[task.category] = [];
-    }
-    categories[task.category].push(task);
+    categories.add(task.category);
   });
-  return categories;
+  return Array.from(categories);
 }
 
-// Get folder class for category
-function getFolderClass(category) {
-  const cat = category.toLowerCase();
-  if (['school', 'work', 'personal', 'health', 'shopping'].includes(cat)) {
-    return `folder-${cat}`;
-  }
-  return 'folder-default';
+function getCategorySymbol(category) {
+  return categorySymbols[category.toLowerCase()] || defaultSymbol;
 }
 
-// Render folders
-function renderFolders() {
-  const container = document.getElementById('foldersContainer');
-  const categories = getCategories();
-  const categoryNames = Object.keys(categories);
+function displayDate() {
+  const dateDisplay = document.getElementById('dateDisplay');
+  if (!dateDisplay) return;
   
-  if (categoryNames.length === 0) {
+  const now = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const dateStr = now.toLocaleDateString('en-US', options);
+  dateDisplay.textContent = dateStr;
+}
+
+function renderTabs() {
+  const tabsContainer = document.getElementById('tabs');
+  if (!tabsContainer) return;
+  
+  const categories = getCategories();
+  
+  let tabsHTML = `
+    <button class="tab ${currentTab === 'all' ? 'active' : ''}" data-category="all" onclick="playClickSound(); switchTab('all')">
+      <span class="tab-symbol">📋</span>
+      <span class="tab-name">All</span>
+    </button>
+  `;
+  
+  categories.forEach(category => {
+    const symbol = getCategorySymbol(category);
+    tabsHTML += `
+      <button class="tab ${currentTab === category ? 'active' : ''}" data-category="${category}" onclick="playClickSound(); switchTab('${category}')">
+        <span class="tab-symbol">${symbol}</span>
+        <span class="tab-name">${category}</span>
+      </button>
+    `;
+  });
+  
+  tabsContainer.innerHTML = tabsHTML;
+}
+
+function switchTab(category) {
+  currentTab = category;
+  renderTabs();
+  renderTasks();
+}
+
+function renderTasks() {
+  const container = document.getElementById('tasksContainer');
+  if (!container) return;
+  
+  let filteredTasks = tasks;
+  if (currentTab !== 'all') {
+    filteredTasks = tasks.filter(t => t.category === currentTab);
+  }
+  
+  if (filteredTasks.length === 0) {
     container.innerHTML = '<p class="no-tasks-message">No tasks yet. Add your first task!</p>';
     return;
   }
   
   container.innerHTML = '';
   
-  categoryNames.forEach(category => {
-    const folder = document.createElement('div');
-    folder.className = `folder ${getFolderClass(category)}`;
-    folder.onclick = () => openCategory(category);
-    
-    const doodle = categoryDoodles[category.toLowerCase()] || defaultDoodle;
-    const taskCount = categories[category].filter(t => !t.completed).length;
-    
-    folder.innerHTML = `
-      <span class="doodle">${doodle}</span>
-      <div class="folder-icon"></div>
-      <span class="folder-name">${category}</span>
-      <span class="folder-count">${taskCount} tasks</span>
-    `;
-    
-    container.appendChild(folder);
-  });
-}
-
-// Open popup
-function openPopup() {
-  document.getElementById('popupOverlay').classList.add('active');
-  document.getElementById('taskInput').value = '';
-  document.getElementById('categoryInput').value = '';
-  document.getElementById('dateInput').value = '';
-  document.getElementById('timeInput').value = '';
-  document.getElementById('taskInput').focus();
-}
-
-// Close popup
-function closePopup() {
-  document.getElementById('popupOverlay').classList.remove('active');
-}
-
-// Save task
-function saveTask() {
-  const taskText = document.getElementById('taskInput').value.trim();
-  const category = document.getElementById('categoryInput').value.trim() || 'general';
-  const date = document.getElementById('dateInput').value;
-  const time = document.getElementById('timeInput').value;
-  
-  if (!taskText) {
-    alert('Please enter a task!');
-    return;
-  }
-  
-  let deadline = null;
-  if (date && time) {
-    deadline = new Date(`${date}T${time}`).getTime();
-  } else if (date) {
-    deadline = new Date(`${date}T23:59`).getTime();
-  }
-  
-  const task = {
-    id: Date.now(),
-    text: taskText,
-    category: category.toLowerCase(),
-    deadline: deadline,
-    completed: false,
-    createdAt: Date.now()
-  };
-  
-  tasks.push(task);
-  saveTasks();
-  renderFolders();
-  playTwinkleSound();
-  closePopup();
-}
-
-// Open category view
-function openCategory(category) {
-  currentCategory = category;
-  document.getElementById('categoryTitle').textContent = category;
-  document.querySelector('.todo-container').style.display = 'none';
-  document.getElementById('categoryView').classList.add('active');
-  renderCategoryTasks();
-}
-
-// Close category view
-function closeCategoryView() {
-  currentCategory = null;
-  document.querySelector('.todo-container').style.display = 'block';
-  document.getElementById('categoryView').classList.remove('active');
-  clearAllTimers();
-}
-
-// Render tasks in category
-function renderCategoryTasks() {
-  const container = document.getElementById('categoryTasks');
-  const categoryTasks = tasks.filter(t => t.category === currentCategory);
-  
-  if (categoryTasks.length === 0) {
-    container.innerHTML = '<p class="no-tasks-message">No tasks in this category!</p>';
-    return;
-  }
-  
-  container.innerHTML = '';
-  
-  categoryTasks.forEach(task => {
+  filteredTasks.forEach(task => {
     const item = document.createElement('div');
     item.className = `task-item${task.completed ? ' completed' : ''}`;
     
@@ -277,11 +258,58 @@ function renderCategoryTasks() {
     container.appendChild(item);
   });
   
-  // Start timers
   startTimers();
 }
 
-// Format deadline
+function openPopup() {
+  playPopupSound();
+  document.getElementById('popupOverlay').classList.add('active');
+  document.getElementById('taskInput').value = '';
+  document.getElementById('categoryInput').value = '';
+  document.getElementById('dateInput').value = '';
+  document.getElementById('timeInput').value = '';
+  document.getElementById('taskInput').focus();
+}
+
+function closePopup() {
+  document.getElementById('popupOverlay').classList.remove('active');
+}
+
+function saveTask() {
+  const taskText = document.getElementById('taskInput').value.trim();
+  const category = document.getElementById('categoryInput').value.trim() || 'general';
+  const date = document.getElementById('dateInput').value;
+  const time = document.getElementById('timeInput').value;
+  
+  if (!taskText) {
+    alert('Please enter a task!');
+    return;
+  }
+  
+  let deadline = null;
+  if (date && time) {
+    deadline = new Date(`${date}T${time}`).getTime();
+  } else if (date) {
+    deadline = new Date(`${date}T23:59`).getTime();
+  }
+  
+  const task = {
+    id: Date.now(),
+    text: taskText,
+    category: category.toLowerCase(),
+    deadline: deadline,
+    completed: false,
+    createdAt: Date.now()
+  };
+  
+  tasks.push(task);
+  saveTasks();
+  playTwinkleSound();
+  closePopup();
+  renderTabs();
+  renderTasks();
+}
+
 function formatDeadline(deadlineTime) {
   const now = Date.now();
   const diff = deadlineTime - now;
@@ -304,11 +332,12 @@ function formatDeadline(deadlineTime) {
   }
 }
 
-// Start timers for all tasks
 function startTimers() {
   clearAllTimers();
   
-  tasks.forEach(task => {
+  const tasksToShow = currentTab === 'all' ? tasks : tasks.filter(t => t.category === currentTab);
+  
+  tasksToShow.forEach(task => {
     if (task.deadline && !task.completed) {
       const interval = setInterval(() => {
         const deadlineEl = document.getElementById(`deadline-${task.id}`);
@@ -323,13 +352,11 @@ function startTimers() {
   });
 }
 
-// Clear all timers
 function clearAllTimers() {
   timerIntervals.forEach(interval => clearInterval(interval));
   timerIntervals = [];
 }
 
-// Toggle task completion
 function toggleTask(id) {
   const task = tasks.find(t => t.id === id);
   if (task) {
@@ -342,23 +369,19 @@ function toggleTask(id) {
       playTwinkleSound();
     }
     
-    renderCategoryTasks();
-    renderFolders();
+    renderTasks();
     
-    // Check if all tasks are completed
     checkAllCompleted();
   }
 }
 
-// Delete task
 function deleteTask(id) {
   tasks = tasks.filter(t => t.id !== id);
   saveTasks();
-  renderCategoryTasks();
-  renderFolders();
+  renderTabs();
+  renderTasks();
 }
 
-// Show message
 function showMessage(message) {
   const overlay = document.getElementById('messageOverlay');
   const box = document.getElementById('messageBox');
@@ -370,7 +393,6 @@ function showMessage(message) {
   }, 2000);
 }
 
-// Check if all tasks completed
 function checkAllCompleted() {
   if (tasks.length > 0 && tasks.every(t => t.completed)) {
     setTimeout(() => {
@@ -379,7 +401,6 @@ function checkAllCompleted() {
   }
 }
 
-// Show win screen
 function showWinScreen() {
   const overlay = document.getElementById('winOverlay');
   overlay.classList.add('active');
@@ -394,7 +415,6 @@ function showWinScreen() {
   }, 3000);
 }
 
-// Confetti
 function startConfetti() {
   if (confettiActive) return;
   confettiActive = true;
@@ -469,7 +489,6 @@ function stopConfetti() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// Effects
 function startEffects() {
   if (effectsActive) return;
   effectsActive = true;
@@ -530,11 +549,12 @@ function stopEffects() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// Event listeners
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('foldersContainer')) {
+  if (document.getElementById('tasksContainer')) {
     loadTasks();
-    renderFolders();
+    displayDate();
+    renderTabs();
+    renderTasks();
   }
   
   if (document.getElementById('taskInput')) {
@@ -547,14 +567,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Close popup on overlay click
   document.getElementById('popupOverlay').addEventListener('click', (e) => {
     if (e.target === document.getElementById('popupOverlay')) {
       closePopup();
     }
   });
   
-  // Handle Enter key in task input
   document.getElementById('taskInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       document.getElementById('categoryInput').focus();
